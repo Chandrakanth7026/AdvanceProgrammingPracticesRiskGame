@@ -1,11 +1,12 @@
 package riskModels.map;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import riskModels.continent.Continent;
 import riskModels.country.Country;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * This class holds the properties to create graph from map file
@@ -14,12 +15,23 @@ import java.util.List;
  */
 public class GameMap {
 
-    public HashMap<Country, List<Country>> countryAndNeighborsMap = new HashMap<>();
+    public LinkedHashMap<Country, List<Country>> countryAndNeighborsMap = new LinkedHashMap<>();
     public List<Continent> continentList = new ArrayList<>();
+    public Map<String,String> mapDetail = new LinkedHashMap<String,String>();
     public boolean isCorrectMap = true;
     public String errorMessage;
+    
+    
 
-    public boolean isCorrectMap() {
+    public Map<String, String> getMapDetail() {
+		return mapDetail;
+	}
+
+	public void setMapDetail(Map<String, String> mapDetail) {
+		this.mapDetail = mapDetail;
+	}
+
+	public boolean isCorrectMap() {
         return isCorrectMap;
     }
 
@@ -27,11 +39,11 @@ public class GameMap {
         this.isCorrectMap = isCorrectMap;
     }
 
-    public HashMap<Country, List<Country>> getCountryAndNeighborsMap() {
+    public LinkedHashMap<Country, List<Country>> getCountryAndNeighborsMap() {
         return countryAndNeighborsMap;
     }
 
-    public void setCountryAndNeighborsMap(HashMap<Country, List<Country>> countryAndNeighborsMap) {
+    public void setCountryAndNeighborsMap(LinkedHashMap<Country, List<Country>> countryAndNeighborsMap) {
         this.countryAndNeighborsMap = countryAndNeighborsMap;
     }
 

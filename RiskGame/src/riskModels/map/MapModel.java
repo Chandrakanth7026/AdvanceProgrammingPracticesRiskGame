@@ -1,19 +1,23 @@
 package riskModels.map;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import riskModels.continent.Continent;
 import riskModels.country.Country;
 import riskModels.country.CountryConstants;
 import util.RiskGameUtil;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 public class MapModel {
     /**
@@ -22,9 +26,9 @@ public class MapModel {
      * @param countryAndNeighbors It is same List returned while reading [Territories] part
      * @return HashMap ,Which will have Country as a key and List of Country (neighbors) as a Value.it will help to create graph
      */
-    public static HashMap<Country, List<Country>> assignContinentToNeighbors(List<Country> countryAndNeighbors) {
-        HashMap<String, String> countryContinentMap = new HashMap<String, String>();
-        HashMap<Country, List<Country>> countryAndNeighbours = new HashMap<Country, List<Country>>();
+    public static LinkedHashMap<Country, List<Country>> assignContinentToNeighbors(List<Country> countryAndNeighbors) {
+    	LinkedHashMap<String, String> countryContinentMap = new LinkedHashMap<String, String>();
+        LinkedHashMap<Country, List<Country>> countryAndNeighbours = new LinkedHashMap<Country, List<Country>>();
 
         for (Country country : countryAndNeighbors) {
             countryContinentMap.put(country.getCountryName(), country.getBelongsToContinent());
@@ -81,7 +85,7 @@ public class MapModel {
     }
 
     /**
-     * This method will read the continet part of map file
+     * This method will read the continent part of map file
      *
      * @param bufferReaderForFile
      * @return List of Continent. every single object of the list contains continentName and number of countries it hold.
@@ -142,16 +146,21 @@ public class MapModel {
             String st, maps, Continents, Territories;
             while ((st = bufferReaderForFile.readLine()) != null) {
                 if (st.startsWith("[")) {
+                	Map<String,String> mapDetail = new HashMap<String,String>();
 
                     String id = st.substring(st.indexOf("[") + 1, st.indexOf("]"));
                     if (id.equalsIgnoreCase("Map")) {
                     	isMAPpresent=true;
+                    	
                         while ((maps = bufferReaderForFile.readLine()) != null && !maps.startsWith("[")) {
                             if (RiskGameUtil.checkNullString(maps)) {
                                 System.out.println(maps);
+                                String[] mapIndex = maps.split("=");
+                                mapDetails.getMapDetail().put(mapIndex[0], mapIndex[1]);
                                 bufferReaderForFile.mark(0);
                             }
                         }
+                        
                         bufferReaderForFile.reset();
 
                     }
@@ -169,7 +178,7 @@ public class MapModel {
                     	isTerritoryPresent=true;
                     	if(isMAPpresent && isTerritoryPresent) {
                         List<Country> countryAndNeighbor = MapModel.readTerritories(bufferReaderForFile);
-                        HashMap<Country, List<Country>> graphReadyMap = MapModel.assignContinentToNeighbors(countryAndNeighbor);
+                        LinkedHashMap<Country, List<Country>> graphReadyMap = MapModel.assignContinentToNeighbors(countryAndNeighbor);
                         System.out.println("Reading of Territories Completed");
                         for (Object o : graphReadyMap.entrySet()) {
                             Map.Entry pair = (Map.Entry) o;
@@ -259,4 +268,61 @@ public void removeCountry(String country,GameMap gameMap) {
 	}
 	gameMap.getCountryAndNeighborsMap().remove(countryToRemove);
 }
+
+//UPDATED WRITE MAP
+public void writeMap(GameMap graphMap, String filename) {
+	String maps = "[Map]\n";
+	for(Map.Entry<String, String> entry:graphMap.getMapDetail().entrySet()){
+		maps = maps + entry.getKey() + "=" + entry.getValue() +"\n";
+	}
+	maps = maps + "\n";
+
+	String continents = "[Continents]\n";
+	for (Continent continent : graphMap.getContinentList()) {
+		continents = continents + continent.continentName + "=" + continent.numberOfTerritories + "\n";
+	}
+	continents = continents + "\n";
+	
+	String territories = "[Territories]\n";
+	
+	// loop of graphMap
+	Iterator<Map.Entry<Country, List<Country>>> it = graphMap.getCountryAndNeighborsMap().entrySet().iterator();
+	while (it.hasNext()) {
+		Map.Entry<Country, List<Country>> pair = it.next();
+		// get country object
+		Country keyCountry = (Country) pair.getKey();
+		// get list of the neighbors
+		List<Country> neiCountryList = (List<Country>) pair.getValue();
+
+		// index of the country from the all countries of all continents
+		// list
+		
+		// get values of each country object
+		territories = territories + keyCountry.countryName + "," + keyCountry.getStartPixel() + ","
+				+ keyCountry.getEndPixel() + "," + keyCountry.getBelongsToContinent();
+
+		// get the index value of the neighbor
+		for (Country c : neiCountryList) {
+			territories = territories + "," + c.countryName;
+		}
+		territories = territories + "\n";
+	}
+
+	String result = maps + continents + territories;
+
+	String dotMapFile = filename + ".map";
+	PrintWriter out = null;
+	try {
+		out = new PrintWriter(new BufferedWriter(new FileWriter(dotMapFile)));
+		out.print(result);
+		out.close();
+	} catch (Exception e) {
+		e.printStackTrace();
+	} finally {
+		out.close();
+	}
+
+}
+
+
 }
